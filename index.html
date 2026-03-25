@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Operacional — COPOM</title>
+  <meta name="description" content="Dashboard operacional de segurança pública — Controle de viaturas e missões em tempo real">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    /* Status message inline */
+    .status-msg {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 16px;
+      white-space: nowrap;
+    }
+    .status-msg.success { color: #10b981; background: rgba(16,185,129,0.1); }
+    .status-msg.error { color: #ef4444; background: rgba(239,68,68,0.1); }
+    .status-msg.warning { color: #f59e0b; background: rgba(245,158,11,0.1); }
+    .status-msg.info { color: #3b82f6; background: rgba(59,130,246,0.1); }
+  </style>
+  <!-- Theme Init Script -->
+  <script>
+    const savedTheme = localStorage.getItem('copom-theme') || 'dark';
+    if(savedTheme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  </script>
+</head>
+<body>
+
+  <!-- ================== HEADER ================== -->
+  <header class="dash-header">
+    <div class="dash-header-left">
+      <div class="header-logo">🛡️</div>
+      <div class="header-title">
+        <h1>PAINEL OPERACIONAL</h1>
+        <p>Segurança Pública — COPOM</p>
+      </div>
+    </div>
+    <div class="dash-header-right">
+      <button onclick="toggleTheme()" title="Alternar Tema Claro/Escuro" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-primary);width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;">
+        <span id="themeIcon">☀️</span>
+      </button>
+      <span id="statusMessage" class="status-msg info">Carregando dados...</span>
+      <div class="header-status online">
+        <span class="pulse"></span>
+        ONLINE
+      </div>
+      <div class="header-clock">
+        <div class="time" id="clockTime">--:--:--</div>
+        <div class="date" id="clockDate">Carregando...</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================== MAIN ================== -->
+  <main class="dash-main">
+
+    <!-- TOOLBAR -->
+    <div class="config-bar fade-in-up delay-1" style="justify-content:flex-end;">
+      <span style="flex:1;font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">📡 DADOS EM TEMPO REAL — AUTO-REFRESH 60s</span>
+      <button class="btn-refresh" id="btnRefresh" onclick="loadDashboard()">🔄 Atualizar</button>
+    </div>
+
+    <!-- SCORECARDS -->
+    <div class="scorecards-grid">
+      <div class="scorecard blue fade-in-up delay-1">
+        <div class="sc-header">
+          <span class="sc-label">Viaturas em Serviço</span>
+          <div class="sc-icon">🚔</div>
+        </div>
+        <div class="sc-value" id="scVtrTotal">0</div>
+        <div class="sc-subtitle" id="scVtrSub">0 ord. + 0 extra</div>
+      </div>
+
+      <div class="scorecard green fade-in-up delay-2">
+        <div class="sc-header">
+          <span class="sc-label">Efetivo Total</span>
+          <div class="sc-icon">👮</div>
+        </div>
+        <div class="sc-value" id="scEfetivo">0</div>
+        <div class="sc-subtitle">Policiais escalados</div>
+      </div>
+
+      <div class="scorecard red fade-in-up delay-3">
+        <div class="sc-header">
+          <span class="sc-label">Missões Ativas</span>
+          <div class="sc-icon">🔴</div>
+        </div>
+        <div class="sc-value" id="scMissoesAtivas">0</div>
+        <div class="sc-subtitle">Em andamento agora</div>
+      </div>
+
+      <div class="scorecard purple fade-in-up delay-4">
+        <div class="sc-header">
+          <span class="sc-label">Missões Encerradas</span>
+          <div class="sc-icon">✅</div>
+        </div>
+        <div class="sc-value" id="scMissoesEncerradas">0</div>
+        <div class="sc-subtitle">Concluídas hoje</div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="dash-grid fade-in-up delay-3">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📊 Viaturas por Unidade</h3>
+        </div>
+        <div class="panel-body">
+          <div class="chart-container">
+            <canvas id="chartVtrUnidade"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🔵 Ordinárias vs Extraordinárias</h3>
+        </div>
+        <div class="panel-body">
+          <div class="chart-container">
+            <canvas id="chartVtrTipo"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🎯 Missões por Tipo</h3>
+        </div>
+        <div class="panel-body">
+          <div class="chart-container">
+            <canvas id="chartMissaoTipo"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSÕES ATIVAS + TABELA VIATURAS -->
+    <div class="dash-grid two-cols fade-in-up delay-4">
+
+      <!-- MISSÕES ATIVAS -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🔴 Missões Ativas</h3>
+        </div>
+        <div class="panel-body" id="missoesAtivasCards">
+          <div class="empty-state">
+            <div class="icon">✅</div>
+            <p>Nenhuma missão ativa no momento</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📋 Histórico de Missões</h3>
+        </div>
+        <div class="panel-body no-padding" id="historicoList">
+          <div class="empty-state">
+            <p>Nenhuma missão encerrada hoje</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TABELA DE VIATURAS -->
+    <div class="panel fade-in-up delay-5" style="margin-top:0;">
+      <div class="panel-header">
+        <h3>🚔 Status das Viaturas</h3>
+      </div>
+      <div class="panel-body no-padding">
+        <div style="overflow-x:auto;">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>PREFIXO</th>
+                <th>QUADRANTE</th>
+                <th>UNIDADE</th>
+                <th>PMS</th>
+                <th>MISSÃO</th>
+                <th>STATUS</th>
+                <th style="text-align:center;">TIPO</th>
+              </tr>
+            </thead>
+            <tbody id="viaturasTableBody">
+              <tr>
+                <td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">
+                  <div class="loading-state"><div class="spinner"></div><p>Carregando viaturas...</p></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="dash-footer">
+    SECRETARIA DE SEGURANÇA PÚBLICA © 2026 — PAINEL OPERACIONAL v1.0
+  </footer>
+
+  <!-- SCRIPTS (ordem importante) -->
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
