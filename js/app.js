@@ -127,9 +127,59 @@ async function loadDashboard() {
 function renderDashboard() {
   renderScorecards();
   renderCharts();
+  renderDisponibilidadePorUnidade();
   renderViaturasTable();
   renderMissoesAtivas();
   renderHistorico();
+}
+
+function renderDisponibilidadePorUnidade() {
+  var grid = document.getElementById('iduGrid');
+  var summary = document.getElementById('idxSummary');
+  if (!grid) return;
+
+  var todas = dashData.viaturas.ordinarias.concat(dashData.viaturas.extraordinarias);
+  var porUnidade = {};
+
+  todas.forEach(function(v) {
+    var uni = v.unidade || 'Sem unidade';
+    if (!porUnidade[uni]) porUnidade[uni] = { disponivel: 0, indisponivel: 0 };
+    var temMissao = v.missao && String(v.missao).trim() !== '' && String(v.missao).trim() !== '-' && String(v.missao).trim() !== '—';
+    if (temMissao) porUnidade[uni].indisponivel++;
+    else porUnidade[uni].disponivel++;
+  });
+
+  var totalD = 0, totalI = 0;
+  var html = '';
+
+  Object.keys(porUnidade).sort().forEach(function(uni) {
+    var u = porUnidade[uni];
+    var total = u.disponivel + u.indisponivel;
+    var pct = total > 0 ? Math.round((u.disponivel / total) * 100) : 0;
+    var cor = pct >= 70 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+    totalD += u.disponivel;
+    totalI += u.indisponivel;
+
+    html += '<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+    html +=   '<div>';
+    html +=     '<div style="font-size:0.8rem;font-weight:700;color:var(--text-primary);">' + uni + '</div>';
+    html +=     '<div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">' + total + ' viatura' + (total !== 1 ? 's' : '') + '</div>';
+    html +=   '</div>';
+    html +=   '<span style="font-size:0.78rem;font-weight:700;color:' + cor + ';">' + pct + '%</span>';
+    html += '</div>';
+    html += '<div style="height:5px;background:var(--border);border-radius:999px;margin-bottom:10px;overflow:hidden;">';
+    html +=   '<div style="height:100%;width:' + pct + '%;background:' + cor + ';border-radius:999px;"></div>';
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:space-between;">';
+    html +=   '<span style="font-size:0.72rem;color:#10b981;font-weight:700;">🟢 ' + u.disponivel + ' disp.</span>';
+    html +=   '<span style="font-size:0.72rem;color:#ef4444;font-weight:700;">🔴 ' + u.indisponivel + ' missão</span>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  grid.innerHTML = html;
+  if (summary) summary.textContent = totalD + ' disponíveis · ' + totalI + ' em missão';
 }
 
 // ========================
