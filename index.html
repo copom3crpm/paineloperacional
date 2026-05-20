@@ -191,8 +191,14 @@
 
     <!-- TABELA DE VIATURAS -->
     <div class="panel fade-in-up delay-5" style="margin-top:0;">
-      <div class="panel-header">
+      <div class="panel-header" style="flex-wrap:wrap;gap:12px;">
         <h3>🚔 Status das Viaturas</h3>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select id="filterUnidade" onchange="renderViaturasTable()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;min-width:180px;">
+            <option value="">Todas as Unidades</option>
+          </select>
+          <input type="text" id="filterVtrSearch" oninput="renderViaturasTable()" placeholder="Buscar prefixo ou PM..." style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:0.78rem;font-family:'Inter',sans-serif;width:200px;" />
+        </div>
       </div>
       <div class="panel-body no-padding">
         <div style="overflow-x:auto;">

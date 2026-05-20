@@ -251,13 +251,50 @@ function renderViaturasTable() {
 
   var todas = dashData.viaturas.ordinarias.concat(dashData.viaturas.extraordinarias);
 
-  if (todas.length === 0) {
+  // Populate filter dropdown (preserve current selection)
+  var filterEl = document.getElementById('filterUnidade');
+  if (filterEl) {
+    var currentVal = filterEl.value;
+    var unidades = [];
+    todas.forEach(function(v) {
+      var u = v.unidade || '';
+      if (u && unidades.indexOf(u) === -1) unidades.push(u);
+    });
+    unidades.sort();
+
+    // Only rebuild options if the list changed
+    var existingOpts = [];
+    for (var i = 1; i < filterEl.options.length; i++) existingOpts.push(filterEl.options[i].value);
+    if (JSON.stringify(existingOpts) !== JSON.stringify(unidades)) {
+      filterEl.innerHTML = '<option value="">Todas as Unidades</option>';
+      unidades.forEach(function(u) {
+        filterEl.innerHTML += '<option value="' + u + '">' + u + '</option>';
+      });
+      filterEl.value = currentVal;
+    }
+  }
+
+  // Apply filters
+  var filtroUnidade = filterEl ? filterEl.value : '';
+  var searchEl = document.getElementById('filterVtrSearch');
+  var filtroTexto = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+  var filtradas = todas.filter(function(v) {
+    if (filtroUnidade && (v.unidade || '') !== filtroUnidade) return false;
+    if (filtroTexto) {
+      var searchable = ((v.prefixo || '') + ' ' + (v.pms || '') + ' ' + (v.quadrante || '') + ' ' + (v.missao || '')).toLowerCase();
+      if (searchable.indexOf(filtroTexto) === -1) return false;
+    }
+    return true;
+  });
+
+  if (filtradas.length === 0) {
     container.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Nenhuma viatura encontrada</td></tr>';
     return;
   }
 
   var html = '';
-  todas.forEach(function(v) {
+  filtradas.forEach(function(v) {
     var temMissao = v.missao && String(v.missao).trim() !== '' && String(v.missao).trim() !== '-';
     var statusClass = temMissao ? 'unavailable' : 'available';
     var statusText = temMissao ? '🔴 INDISPONÍVEL' : '🟢 DISPONÍVEL';
