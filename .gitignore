@@ -1,0 +1,9 @@
+# Ignore everything by default
+*
+
+# Do not ignore the .gitignore itself
+!.gitignore
+
+# Do not ignore the dashboard folder and its contents recursively
+!dashboard/
+!dashboard/**
