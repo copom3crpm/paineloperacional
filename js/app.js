@@ -191,9 +191,20 @@ function renderScorecards() {
   var totalVtr = vtr.ordinarias.length + vtr.extraordinarias.length;
   var totalEfetivo = countEfetivo(vtr);
 
+  // Contar viaturas que estão em missão (campo Missão preenchido na tabela de viaturas)
+  var todas = vtr.ordinarias.concat(vtr.extraordinarias);
+  var vtrsEmMissao = 0;
+  todas.forEach(function(v) {
+    var temMissao = v.missao && String(v.missao).trim() !== '' && String(v.missao).trim() !== '-' && String(v.missao).trim() !== '—';
+    if (temMissao) vtrsEmMissao++;
+  });
+
+  // Missões ativas = o maior entre BD_Missoes ativas e viaturas em missão
+  var missoesAtivas = Math.max(mis.ativas.length, vtrsEmMissao);
+
   animateValue('scVtrTotal', totalVtr);
   animateValue('scEfetivo', totalEfetivo);
-  animateValue('scMissoesAtivas', mis.ativas.length);
+  animateValue('scMissoesAtivas', missoesAtivas);
   animateValue('scMissoesEncerradas', mis.historico.length);
 
   var subOrd = document.getElementById('scVtrSub');
