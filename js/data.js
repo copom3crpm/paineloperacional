@@ -191,8 +191,18 @@ async function fetchMissoes() {
       const dataRow = String(row['Data Início'] || row['Data Inicio'] || '').trim();
       const statusRow = String(row['Status'] || '').toLowerCase();
 
-      // Forçar reset absoluto às 07:00 AM: Nenhuma missão ativa ou histórica do dia anterior sobrevive
-      if (dataRow !== todayStr) return;
+      const isAtiva = statusRow === 'ativa';
+      let isCurrentShift = (dataRow === todayStr);
+      
+      if (!isCurrentShift) {
+        const nextDay = new Date(today);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayStr = ('0' + nextDay.getDate()).slice(-2) + '/' + ('0' + (nextDay.getMonth() + 1)).slice(-2) + '/' + nextDay.getFullYear();
+        const horaRow = String(row['Hora Início'] || row['Hora Inicio'] || '').trim();
+        if (dataRow === nextDayStr && horaRow < '07:00') isCurrentShift = true;
+      }
+      
+      if (!isAtiva && !isCurrentShift) return;
 
       const missao = {
         rowIndex: row._rowIndex,
