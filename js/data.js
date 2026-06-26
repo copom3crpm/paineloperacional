@@ -189,7 +189,7 @@ async function fetchMissoes() {
       if (!row['Prefixo'] && !row['Missão'] && !row['Missao']) return;
 
       const dataRow = String(row['Data Início'] || row['Data Inicio'] || '').trim();
-      const statusRow = String(row['Status'] || '').toLowerCase();
+      const statusRow = String(row['Status'] || '').toLowerCase().trim();
 
       const isAtiva = statusRow === 'ativa';
       let isCurrentShift = (dataRow === todayStr);
