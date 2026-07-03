@@ -216,9 +216,12 @@ async function fetchMissoes() {
         status: row['Status'] || ''
       };
 
-      if (String(missao.status).toLowerCase() === 'ativa') {
+      const hasHoraFim = missao.horaFim && String(missao.horaFim).trim() !== '';
+      const isStatusAtiva = String(missao.status).toLowerCase().trim() === 'ativa';
+
+      if (isStatusAtiva && !hasHoraFim) {
         ativas.push(missao);
-      } else if (missao.status) {
+      } else if (missao.status || hasHoraFim) {
         historico.push(missao);
       }
     });
