@@ -108,6 +108,28 @@ async function loadDashboard() {
     dashData.viaturas = results[0];
     dashData.missoes = results[1];
 
+    // Limpar missões ativas "órfãs" (onde a viatura não tem mais missão)
+    var todasViaturas = dashData.viaturas.ordinarias.concat(dashData.viaturas.extraordinarias);
+    var ativasReais = [];
+    dashData.missoes.ativas.forEach(function(m) {
+      if (!m.prefixo) {
+        ativasReais.push(m);
+        return;
+      }
+      var vtr = todasViaturas.find(function(v) { return v.prefixo === m.prefixo; });
+      if (!vtr) {
+        ativasReais.push(m);
+        return;
+      }
+      var temMissao = vtr.missao && String(vtr.missao).trim() !== '' && String(vtr.missao).trim() !== '-' && String(vtr.missao).trim() !== '—';
+      if (temMissao) {
+        ativasReais.push(m);
+      } else {
+        dashData.missoes.historico.unshift(m); // Se não é mais ativa, vai pro histórico
+      }
+    });
+    dashData.missoes.ativas = ativasReais;
+
     renderDashboard();
     showStatus('✅ Atualizado às ' + new Date().toLocaleTimeString('pt-BR'), 'success');
   } catch (err) {
